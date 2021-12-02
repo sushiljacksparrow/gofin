@@ -1,14 +1,36 @@
-FROM golang:1.16-alpine
+FROM golang:alpine
 
-WORKDIR /app
+# Add Maintainer Info
+LABEL maintainer="Sushil Singh"
+RUN apk add --no-cache --virtual .build-deps \
+        bzip2 \
+        curl \
+        g++ \
+        gcc \
+        bash \
+      cmake \
+      sudo \
+		libssh2 libssh2-dev\
+		git
 
-COPY go.mod ./
+RUN mkdir -p /app/pkg
+RUN mkdir -p /app/resources
+COPY ./pkg /app/pkg/
+#COPY ./resources /app/resources/
+# COPY ./<GOOGLE_CREDS_FIlE> /app/
+RUN ls /app/pkg/
+RUN ls /app/resources
 
-RUN go mod download
+WORKDIR /app/
+#ENV GOPATH=$GOPATH:/go/
+RUN echo $GOPATH
+# Copy go mod and sum files
+COPY go.mod /app/
 
-COPY src/*.go ./
-EXPOSE 8000
+RUN go build -o gofin pkg/main/server.go
 
-RUN go build -o /main
+# Expose port 8080 to the outside world
+EXPOSE 8080
 
-CMD [ "/main" ]
+# Command to run the executable
+CMD ["./gofin"]
